@@ -1,37 +1,59 @@
 import { useState } from 'react';
+import './Login.css'; // Crearemos este archivo para que se vea pro
 
 export default function Login({ onLoginSuccess }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      // Usamos la URL de tu backend en Render
-      const response = await fetch(`${import.meta.env.VITE_SOCKET_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+    // Aquí conectas con tu API segura del backend
+    const response = await fetch(`${import.meta.env.VITE_SOCKET_URL}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: email, password }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token); // Guardamos la "llave"
-        onLoginSuccess(); // Esto le dice al App.jsx que pase a la oficina
-      } else {
-        alert("Credenciales incorrectas");
-      }
-    } catch (error) {
-      console.error("Error al conectar:", error);
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('authToken', data.token); // Almacenamiento seguro
+      onLoginSuccess();
+    } else {
+      alert("Acceso denegado. Credenciales incorrectas.");
     }
   };
 
   return (
-    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '50px' }}>
-      <h2>Login Space Town</h2>
-      <input type="text" placeholder="Usuario" onChange={(e) => setUsername(e.target.value)} />
-      <input type="password" placeholder="Contraseña" onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Entrar</button>
-    </form>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="logo-placeholder">🌐</div>
+        <h2>Sign into your office or create an account</h2>
+        
+        <button className="google-btn" onClick={() => alert("Google Login en desarrollo")}>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" />
+          Continue with Google
+        </button>
+
+        <div className="divider">or</div>
+
+        <form onSubmit={handleLogin}>
+          <input 
+            type="email" 
+            placeholder="Enter your email address" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required 
+          />
+          <input 
+            type="password" 
+            placeholder="Enter your password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required 
+          />
+          <button type="submit" className="signin-btn">Sign in with email</button>
+        </form>
+      </div>
+    </div>
   );
 }

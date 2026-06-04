@@ -104,6 +104,11 @@ const CONFIG = Object.freeze({
   },
 });
 
+const token = localStorage.getItem('authToken');
+if (!token) {
+    window.location.href = '/'; // O manejar con React Router
+    return;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. PURE UTILITY FUNCTIONS
