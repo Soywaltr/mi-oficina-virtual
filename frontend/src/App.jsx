@@ -37,21 +37,6 @@ import {
   Maximize, Menu, ChevronLeft,
 } from 'lucide-react';
 
-export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Si no está logueado, muestra el login. Si lo está, muestra el juego.
-  return (
-    <div>
-      {!isLoggedIn ? (
-        <Login onLoginSuccess={() => setIsLoggedIn(true)} />
-      ) : (
-        <GameMap />
-      )}
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CONFIGURATION  (single source of truth — no magic strings elsewhere)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1064,6 +1049,7 @@ export default function App() {
   const [sessionEnded,   setSessionEnded]   = useState(false);
   const [userName,       setUserName]       = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(CONFIG.AVATARS[0]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   /**
    * pantallaGlobal lives here (not inside useScreenShare) to break the
@@ -1141,6 +1127,16 @@ export default function App() {
       onAvatarChange={setSelectedAvatar}
       onJoin={() => setInLobby(false)}
     />
+  );
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      {!isLoggedIn ? (
+        <Login onLoginSuccess={() => setIsLoggedIn(true)} />
+      ) : (
+        <GameMap />
+      )}
+    </div>
   );
 
   return (
