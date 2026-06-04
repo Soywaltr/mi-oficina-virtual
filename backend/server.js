@@ -9,28 +9,46 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-// 1. Defensas básicas y configuración de JSON
 app.use(helmet()); 
 app.use(cors());
-app.use(express.json()); // Necesario para leer el JSON del login
+app.use(express.json()); 
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
-// --- RUTA DE LOGIN SEGURA ---
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5, 
   message: "Demasiados intentos. Inténtalo de nuevo en 15 minutos."
 });
 
-// Función placeholder: Aquí debes conectar tu Base de Datos real
+// --- BASE DE DATOS TEMPORAL ---
+// Usamos bcrypt.hashSync para encriptar tus contraseñas automáticamente al iniciar el servidor.
+// El sistema antihackers funcionará a la perfección.
+const usuariosPermitidos = [
+  {
+    id: "1",
+    username: "wpenaherrera@ariaia.com",
+    passwordHash: bcrypt.hashSync("wpenaherrera123456@", 10) 
+  },
+  {
+    id: "2",
+    username: "csolis@ariaia.com",
+    passwordHash: bcrypt.hashSync("csolis123456@", 10) 
+  },
+  {
+    id: "3",
+    username: "mruiz@ariaia.com",
+    passwordHash: bcrypt.hashSync("mruiz123456@", 10) 
+  }
+];
+
+// El sistema ahora busca en la lista de arriba
 async function findUser(username) {
-  // EJEMPLO: return await User.findOne({ username });
-  // Por ahora esto devolverá null, debes implementar tu lógica de DB aquí
-  return null; 
+  return usuariosPermitidos.find(user => user.username === username);
 }
 
+// --- RUTA DE LOGIN SEGURA ---
 app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   
@@ -40,12 +58,10 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.passwordHash);
   if (!isMatch) return res.status(401).json({ error: "Credenciales inválidas" });
 
-  // Asegúrate de tener JWT_SECRET en las variables de entorno de Render
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'clave_temporal_segura', { expiresIn: '1h' });
   
   res.json({ token });
 });
-// ----------------------------
 
 const players = {}; 
 

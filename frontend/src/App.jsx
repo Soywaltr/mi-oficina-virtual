@@ -1045,11 +1045,14 @@ function OfficeScreen({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [inLobby,        setInLobby]        = useState(true);
-  const [sessionEnded,   setSessionEnded]   = useState(false);
-  const [userName,       setUserName]       = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(CONFIG.AVATARS[0]);
+  // 1. Estados de flujo: ¿Está logueado? ¿Está en la sala de espera?
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [inLobby, setInLobby] = useState(true);
+  const [sessionEnded, setSessionEnded] = useState(false);
+
+  // 2. Datos del usuario
+  const [userName, setUserName] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState(CONFIG.AVATARS[0]);
 
   /**
    * pantallaGlobal lives here (not inside useScreenShare) to break the
@@ -1060,31 +1063,38 @@ export default function App() {
 
   useGlobalStyles();
 
+  // Verificamos si ya hay un token guardado al cargar la app
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   const media = useMediaDevices();
 
   const peers = usePeerSession({
-    active:           !inLobby,
+    active: isLoggedIn && !inLobby, // Solo activa los peers cuando ya está en la oficina
     userName,
-    avatar:           selectedAvatar,
-    localStreamRef:   media.streamRef,
+    avatar: selectedAvatar,
+    localStreamRef: media.streamRef,
     onIncomingScreen: setPantallaGlobal,
   });
 
   const screenShare = useScreenShare({
-    active:           !inLobby,
-    nearbyPlayers:    peers.nearbyPlayers,
-    peersMap:         peers.peersMap,
-    peerRef:          peers.peerRef,
+    active: isLoggedIn && !inLobby,
+    nearbyPlayers: peers.nearbyPlayers,
+    peersMap: peers.peersMap,
+    peerRef: peers.peerRef,
     pantallaGlobal,
     setPantallaGlobal,
   });
 
-  const chat      = useChat({ active: !inLobby, userName });
-  const reactions = useReactions({ active: !inLobby });
+  const chat = useChat({ active: isLoggedIn && !inLobby, userName });
+  const reactions = useReactions({ active: isLoggedIn && !inLobby });
 
   /**
-   * Central toggle handler — the only place where a track toggle
-   * results in a socket emission (keeps media hook socket-agnostic).
+   * Central toggle handler
    */
   const handleToggle = useCallback((kind) => {
     const enabled = media.toggle(kind);
@@ -1097,48 +1107,57 @@ export default function App() {
   const handleLeave = useCallback(() => {
     peers.peerRef.current?.destroy();
     socket.disconnect();
+    localStorage.removeItem('authToken'); // Opcional: Cerrar sesión real al salir
     setSessionEnded(true);
   }, [peers.peerRef]);
 
-  /**
-   * Device swap wired here so useMediaDevices stays ignorant of
-   * PeerJS and useMediaDevices stays ignorant of the socket.
-   */
   const handleDeviceChange = useCallback((deviceId, kind) => {
     media.changeDevice(deviceId, kind, peers.replaceTrack);
   }, [media, peers.replaceTrack]);
 
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDERIZADO DEL FLUJO (Las "Pantallas")
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Pantalla de Desconexión
   if (sessionEnded) return <SessionEndedScreen />;
 
-  if (inLobby) return (
-    <LobbyScreen
-      stream={media.activeStream}
-      audioEnabled={media.audioEnabled}
-      videoEnabled={media.videoEnabled}
-      onToggleAudio={() => handleToggle('audio')}
-      onToggleVideo={() => handleToggle('video')}
-      devices={media.devices}
-      selectedAudio={media.selectedAudio}
-      selectedVideo={media.selectedVideo}
-      onChangeDevice={handleDeviceChange}
-      userName={userName}
-      onUserNameChange={setUserName}
-      selectedAvatar={selectedAvatar}
-      onAvatarChange={setSelectedAvatar}
-      onJoin={() => setInLobby(false)}
-    />
-  );
+  // Paso 1: Pantalla de Login
+  if (!isLoggedIn) {
+    return (
+      <Login 
+        onLoginSuccess={(nombreUsuario) => {
+          setUserName(nombreUsuario); // Pre-llenamos el nombre en el Lobby
+          setIsLoggedIn(true);
+        }} 
+      />
+    );
+  }
 
-  return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      {!isLoggedIn ? (
-        <Login onLoginSuccess={() => setIsLoggedIn(true)} />
-      ) : (
-        <GameMap />
-      )}
-    </div>
-  );
+  // Paso 2: Sala de Espera (Lobby)
+  if (inLobby) {
+    return (
+      <LobbyScreen
+        stream={media.activeStream}
+        audioEnabled={media.audioEnabled}
+        videoEnabled={media.videoEnabled}
+        onToggleAudio={() => handleToggle('audio')}
+        onToggleVideo={() => handleToggle('video')}
+        devices={media.devices}
+        selectedAudio={media.selectedAudio}
+        selectedVideo={media.selectedVideo}
+        onChangeDevice={handleDeviceChange}
+        userName={userName}
+        onUserNameChange={setUserName}
+        selectedAvatar={selectedAvatar}
+        onAvatarChange={setSelectedAvatar}
+        onJoin={() => setInLobby(false)} // Esto lo pasa a la Oficina
+      />
+    );
+  }
 
+  // Paso 3: La Oficina Virtual (GameMap + Video Calls)
   return (
     <OfficeScreen
       userName={userName}
