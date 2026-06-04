@@ -1,0 +1,15 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Evita que salgan barras de scroll */
+  background-color: #242424; /* Opcional: color de fondo por si el mapa no carga rápido */
+}
+
+/* Asegura que los controles de la cámara floten sobre el juego */
+#root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
