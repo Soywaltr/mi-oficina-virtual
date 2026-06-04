@@ -104,12 +104,6 @@ const CONFIG = Object.freeze({
   },
 });
 
-const token = localStorage.getItem('authToken');
-if (!token) {
-    window.location.href = '/'; // O manejar con React Router
-    return;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. PURE UTILITY FUNCTIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -692,6 +686,12 @@ class OfficeScene extends Phaser.Scene {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function GameMap({ socket, userName, avatar, onNearbyUpdate }) {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+      window.location.href = '/'; 
+      return null; // Asegúrate de agregar la palabra "null"
+  }
+
   const gameRef  = useRef(null);
   const propsRef = useRef({ socket, userName, avatar, onNearbyUpdate });
 
