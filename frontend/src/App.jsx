@@ -29,12 +29,28 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import Peer from 'peerjs';
+import Login from './Login';
 import GameMap from './GameMap';
 import {
   Mic, MicOff, Video, VideoOff, MonitorUp, Smile,
   MessageSquare, MapPin, PhoneOff, Send, ZoomIn, ZoomOut,
   Maximize, Menu, ChevronLeft,
 } from 'lucide-react';
+
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Si no está logueado, muestra el login. Si lo está, muestra el juego.
+  return (
+    <div>
+      {!isLoggedIn ? (
+        <Login onLoginSuccess={() => setIsLoggedIn(true)} />
+      ) : (
+        <GameMap />
+      )}
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CONFIGURATION  (single source of truth — no magic strings elsewhere)
