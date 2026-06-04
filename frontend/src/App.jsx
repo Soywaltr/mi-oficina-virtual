@@ -42,7 +42,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CONFIG = Object.freeze({
-  SOCKET_URL: 'http://192.168.18.8:3001', // Ajusta a tu IP si es necesario
+  SOCKET_URL: import.meta.env.VITE_SOCKET_URL,
   AVATARS:    ['Leo', 'Max', 'Noah', 'Nerf'],
   EMOJIS:     ['👍', '❤️', '😂', '👏', '🎉', '🤔'],
 
